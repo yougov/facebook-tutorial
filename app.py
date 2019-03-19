@@ -1,16 +1,11 @@
 #!/usr/bin/env python
-# coding=utf-8
 
-__author__ = "Chris Wood"
+import urllib.parse
+import logging
 
 from flask_bootstrap import Bootstrap
-
-from json import loads
-from urllib3 import HTTPSConnectionPool, disable_warnings
-from urllib.parse import parse_qs
-
-import logging
 import flask
+from requests_toolbelt import sessions
 
 app = flask.Flask(__name__)
 app.config.from_object(__name__)
@@ -19,41 +14,21 @@ Bootstrap(app)
 
 FACEBOOK_APP_ID = "YOUR_APP_ID"
 FACEBOOK_APP_SECRET = "YOUR_APP_SECRET"
-GRAPH_API_VERSION = "v2.4"
 REDIRECT_URI = "http://127.0.0.1:8080/callback"
 
 TOKENS = {}
+
+facebook = sessions.BaseUrlSession('https://graph.facebook.com/v2.4/')
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S')
-disable_warnings()
 
 
 class NotAuthorizedException(Exception):
     pass
 
-
-class FacebookConnection(HTTPSConnectionPool):
-    """
-    Convenience class to that wraps connection and call to Graph API
-    """
-    def __init__(self):
-        super(FacebookConnection, self).__init__('graph.facebook.com')
-
-    def __call__(self, method, url, token, http_headers, request_body):
-        if http_headers is None:
-            http_headers = {}
-
-        if token is not None:
-            http_headers["Authorization"] = "Bearer %s" % token
-
-        return self.urlopen(
-            method, url, headers=http_headers, body=request_body)
-
-
-FACEBOOK_CONNECTION = FacebookConnection()
 
 # OAuth functions
 
@@ -64,36 +39,36 @@ def get_app_token():
 
     :return:
     """
+    params = dict(
+        client_id=FACEBOOK_APP_ID,
+        client_secret=FACEBOOK_APP_SECRET,
+        grant_type='client_credentials',
+    )
     try:
-        response = FACEBOOK_CONNECTION(
-            'GET',
-            '/oauth/access_token?client_id=%s'
-            '&client_secret=%s&grant_type=client_credentials'
-            % (FACEBOOK_APP_ID, FACEBOOK_APP_SECRET),
-            None, None, None)
-
-        return parse_qs(response.data.decode("utf-8"))["access_token"]
+        resp = facebook.get('/oauth/access_token', params=params)
+        resp.raise_for_status()
+        return urllib.parse.parse_qs(resp.text)["access_token"]
     except KeyError:
-        logging.log(logging.ERROR, response.data)
+        logging.log(logging.ERROR, resp.text)
         raise NotAuthorizedException(
             "Authorization error", "App access token not found")
 
 
 def get_user_token(code):
+    params = dict(
+        client_id=FACEBOOK_APP_ID,
+        redirect_uri=REDIRECT_URI,
+        client_secret=FACEBOOK_APP_SECRET,
+        code=code,
+    )
     try:
-        response = FACEBOOK_CONNECTION(
-            'GET',
-            '/%s/oauth/access_token?client_id=%s&redirect_uri=%s'
-            '&client_secret=%s&code=%s'
-            % (
-                GRAPH_API_VERSION, FACEBOOK_APP_ID, REDIRECT_URI,
-                FACEBOOK_APP_SECRET, code),
-            None, None, None)
-        print(response.data.decode("utf-8"))
-
-        return loads(response.data.decode("utf-8"))["access_token"]
+        resp = facebook.get(
+            f'oauth/access_token',
+            params=params,
+        )
+        return resp.json()["access_token"]
     except KeyError:
-        logging.log(logging.ERROR, response.data)
+        logging.log(logging.ERROR, resp.text)
         raise NotAuthorizedException(
             "Authorization error", "User access token not found")
 
@@ -125,10 +100,13 @@ def authorize_facebook():
 
     :return: Redirects to the Facebook login page
     """
-    return flask.redirect(
-        "https://www.facebook.com/dialog/oauth?client_id=%s"
-        '&redirect_uri=%s&scope=publish_actions'
-        % (FACEBOOK_APP_ID, REDIRECT_URI))
+    qs = urllib.parse.urlencode(dict(
+        client_id=FACEBOOK_APP_ID,
+        redirect_uri=REDIRECT_URI,
+        scope='publish_actions',
+    ))
+    url = 'https://www.facebook.com/dialog/oauth?' + qs
+    return flask.redirect(url)
 
 
 @app.route("/callback")
@@ -163,18 +141,22 @@ def hello_world():
     # Get a place id to include in the post, search for
     # coffee within 10000 metres and grab first returned
     try:
-        response = FACEBOOK_CONNECTION(
-            'GET',
-            '/%s/search?q=coffee+shop&type=place&center=%s,%s&distance=10000'
-            % (
-                GRAPH_API_VERSION, flask.request.args.get("lat"),
-                flask.request.args.get("lng")),
-            token, None, None)
+        args = flask.request.args
+        params = dict(
+            q='coffee shop',
+            type='place',
+            center=f'{args.get("lat")},{args.get("lng")}',
+            distance=10000,
+        )
+        resp = facebook.get(
+            f'search',
+            params=params,
+            headers={'Authorization': f'Bearer {token}'},
+        )
 
-        if response.status != 200:
-            logging.log(logging.ERROR, response.data)
-            return 'Unexpected HTTP return code from Facebook: %s' % \
-                response.status, response.status
+        if not resp.ok:
+            logging.log(logging.ERROR, resp.text)
+            return f'Unexpected HTTP return code from Facebook: {resp}'
 
     except Exception as e:
         logging.log(logging.ERROR, str(e))
@@ -182,7 +164,7 @@ def hello_world():
 
     # Attempt to add place to post (if one is returned)
     try:
-        places = loads(response.data.decode("utf-8"))
+        places = resp.json()
         post = {
             "message": "Heading+out+for+coffee.+Hello+World%21",
             "place": places["data"][0]["id"]
@@ -199,17 +181,15 @@ def hello_world():
         }
 
     try:
-        response = FACEBOOK_CONNECTION(
-            'POST', '/%s/me/feed' % GRAPH_API_VERSION, token,
-            None,
-            '&'.join(list(
-                "%s=%s" % (key, value) for key, value in post.items())),
+        resp = facebook.post(
+            'me/feed',
+            headers=dict(Authorization=f'Bearer {token}'),
+            data=post,
         )
 
-        if response.status != 200:
-            logging.log(logging.ERROR, response.data)
-            return 'Unexpected HTTP return code from Facebook: %s' % \
-                response.status, response.status
+        if not resp.ok:
+            logging.log(logging.ERROR, resp.text)
+            return f'Unexpected HTTP return code from Facebook: {resp}'
     except Exception as e:
         logging.log(logging.ERROR, str(e))
         return 'Unknown error calling Graph API', 502
