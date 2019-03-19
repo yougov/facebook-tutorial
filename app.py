@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+__requires__ = ['flask_bootstrap', 'flask', 'requests_toolbelt']
 
 import urllib.parse
 import logging
