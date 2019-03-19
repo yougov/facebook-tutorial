@@ -47,7 +47,7 @@ def get_app_token():
     try:
         resp = facebook.get('/oauth/access_token', params=params)
         resp.raise_for_status()
-        return urllib.parse.parse_qs(resp.text)["access_token"]
+        return resp.json()["access_token"]
     except KeyError:
         logging.log(logging.ERROR, resp.text)
         raise NotAuthorizedException(
