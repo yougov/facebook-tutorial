@@ -2,6 +2,7 @@ __requires__ = ['flask_bootstrap', 'flask', 'requests_toolbelt']
 
 import urllib.parse
 import logging
+import os
 
 from flask_bootstrap import Bootstrap
 import flask
@@ -12,8 +13,8 @@ app.config.from_object(__name__)
 app.secret_key = "Secret key"
 Bootstrap(app)
 
-FACEBOOK_APP_ID = "YOUR_APP_ID"
-FACEBOOK_APP_SECRET = "YOUR_APP_SECRET"
+FACEBOOK_APP_ID = os.environ['FACEBOOK_APP_ID']
+FACEBOOK_APP_SECRET = os.environ['FACEBOOK_APP_SECRET']
 
 TOKENS = {}
 
