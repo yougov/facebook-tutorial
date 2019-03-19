@@ -208,4 +208,4 @@ if __name__ == '__main__':
     # Register an app token at start-up (purely as
     # validation that configuration for Facebook is correct)
     TOKENS["app_token"] = get_app_token()
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host='::', port=int(os.environ.get('PORT', 8080)), debug=True)
