@@ -14,7 +14,6 @@ Bootstrap(app)
 
 FACEBOOK_APP_ID = "YOUR_APP_ID"
 FACEBOOK_APP_SECRET = "YOUR_APP_SECRET"
-REDIRECT_URI = "http://127.0.0.1:8080/callback"
 
 TOKENS = {}
 
@@ -57,7 +56,7 @@ def get_app_token():
 def get_user_token(code):
     params = dict(
         client_id=FACEBOOK_APP_ID,
-        redirect_uri=REDIRECT_URI,
+        redirect_uri=callback_url(),
         client_secret=FACEBOOK_APP_SECRET,
         code=code,
     )
@@ -102,7 +101,7 @@ def authorize_facebook():
     """
     qs = urllib.parse.urlencode(dict(
         client_id=FACEBOOK_APP_ID,
-        redirect_uri=REDIRECT_URI,
+        redirect_uri=callback_url(),
         scope='publish_actions',
     ))
     url = 'https://www.facebook.com/dialog/oauth?' + qs
@@ -125,6 +124,10 @@ def handle_callback():
         return flask.redirect("/")
     except NotAuthorizedException:
         return 'Access was not granted or authorization failed', 403
+
+
+def callback_url():
+    return urllib.parse.urljoin(flask.request.base_url, '/callback')
 
 
 @app.route("/helloworld", methods=["POST"])
