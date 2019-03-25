@@ -131,10 +131,9 @@ def callback_url():
     return urllib.parse.urljoin(flask.request.base_url, '/callback')
 
 
-@app.route("/helloworld", methods=["POST"])
-def hello_world():
+@app.route("/posts")
+def posts():
     global TOKENS
-    lat_lng = None
 
     # Make sure there is a token
     try:
@@ -142,66 +141,13 @@ def hello_world():
     except KeyError:
         return 'Not authorized', 401
 
-    # Get a place id to include in the post, search for
-    # coffee within 10000 metres and grab first returned
-    try:
-        args = flask.request.args
-        params = dict(
-            q='coffee shop',
-            type='place',
-            center=f'{args.get("lat")},{args.get("lng")}',
-            distance=10000,
-        )
-        resp = facebook.get(
-            f'search',
-            params=params,
-            headers={'Authorization': f'Bearer {token}'},
-        )
-
-        if not resp.ok:
-            logging.log(logging.ERROR, resp.text)
-            return f'Unexpected HTTP return code from Facebook: {resp}'
-
-    except Exception as e:
-        logging.log(logging.ERROR, str(e))
-        return 'Unknown error calling Graph API', 502
-
-    # Attempt to add place to post (if one is returned)
-    try:
-        places = resp.json()
-        post = {
-            "message": "Heading+out+for+coffee.+Hello+World%21",
-            "place": places["data"][0]["id"]
-        }
-        lat_lng = {
-            "name": places["data"][0]["name"],
-            "lat": places["data"][0]["location"]["latitude"],
-            "lng": places["data"][0]["location"]["longitude"]
-        }
-
-    except (KeyError, IndexError):
-        post = {
-            "message": "Staying+home+for+coffee.+Goodbye+World%21"
-        }
-
-    try:
-        resp = facebook.post(
-            'me/feed',
-            headers=dict(Authorization=f'Bearer {token}'),
-            data=post,
-        )
-
-        if not resp.ok:
-            logging.log(logging.ERROR, resp.text)
-            return f'Unexpected HTTP return code from Facebook: {resp}'
-    except Exception as e:
-        logging.log(logging.ERROR, str(e))
-        return 'Unknown error calling Graph API', 502
-
-    if lat_lng is None:
-        return '', 201
-    else:
-        return flask.jsonify(**lat_lng), 201
+    resp = facebook.get(
+        f'me/feed',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    if not resp.ok:
+        return f'Unexpected resp from Facebook: {resp}'
+    return resp.text
 
 
 if __name__ == '__main__':

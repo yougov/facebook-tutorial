@@ -4,10 +4,6 @@ html, body {
   padding: 0;
 }
 
-#map-display {
-  height: 100%;
-}
-
 #login {
   margin:0 auto;
   position: absolute;
@@ -15,16 +11,3 @@ html, body {
   top:20%;
   z-index: 99;
 }
-
-.contextmenu{
-  border-radius: 2px;
-  visibility:hidden;
-  background: #FAFAFA;
-  border:1px solid #8888FF;
-  z-index: 10;
-  position: relative;
-  width: 175px;
-  font-size: small;
-  text-align: center;
-}
-
