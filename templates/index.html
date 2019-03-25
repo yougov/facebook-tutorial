@@ -4,14 +4,13 @@
 {% block scripts %}
 {{super()}}
 <script>
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId: '{{FACEBOOK_APP_ID}}',
-      autoLogAppEvents: true,
-      xfbml: true,
-      version: '{{FACEBOOK_GRAPH_VERSION}}'
-    });
+  facebook_options = {
+    appId: '{{FACEBOOK_APP_ID}}',
+    autoLogAppEvents: true,
+    xfbml: true,
+    version: '{{FACEBOOK_GRAPH_VERSION}}'
   };
+  facebook_scope = '{{FACEBOOK_SCOPE}}';
 </script>
 
 <script src="{{url_for('static', filename='index.js')}}"></script>

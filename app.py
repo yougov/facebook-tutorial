@@ -16,6 +16,7 @@ Bootstrap(app)
 FACEBOOK_APP_ID = os.environ['FACEBOOK_APP_ID']
 FACEBOOK_APP_SECRET = os.environ['FACEBOOK_APP_SECRET']
 FACEBOOK_GRAPH_VERSION = 'v3.2'
+FACEBOOK_SCOPE = 'user_posts'
 
 TOKENS = {}
 
@@ -94,6 +95,7 @@ def serve_home():
         authorized=user_authorized,
         FACEBOOK_APP_ID=FACEBOOK_APP_ID,
         FACEBOOK_GRAPH_VERSION=FACEBOOK_GRAPH_VERSION,
+        FACEBOOK_SCOPE=FACEBOOK_SCOPE,
     )
 
 
