@@ -1,5 +1,3 @@
-__requires__ = ['flask_bootstrap', 'flask', 'requests_toolbelt']
-
 import logging
 import os
 import random
