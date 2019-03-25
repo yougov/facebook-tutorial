@@ -2,6 +2,7 @@ __requires__ = ['flask_bootstrap', 'flask', 'requests_toolbelt']
 
 import logging
 import os
+import random
 
 from flask_bootstrap import Bootstrap
 import flask
@@ -37,6 +38,13 @@ def serve_home():
     return flask.render_template("index.html", **globals())
 
 
+def analyze(feed):
+    posts = feed['data']
+    fake = random.randint(0, len(posts))
+    total = len(posts)
+    return dict(total=total, fake=fake, real=total-fake)
+
+
 @app.route("/posts")
 def posts():
     """
@@ -50,7 +58,7 @@ def posts():
     )
     if not resp.ok:
         return f'Unexpected resp from Facebook: {resp}'
-    return flask.jsonify(resp.json()['data'])
+    return flask.jsonify(analyze(resp.json()))
 
 
 if __name__ == '__main__':
