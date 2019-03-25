@@ -85,7 +85,7 @@ def serve_home():
 
     # Check whether the user has authorized the app,
     # if authorized login button will not be displayed
-    user_authorized = True if "user_token" in TOKENS else False
+    user_authorized = "user_token" in TOKENS
 
     return flask.render_template("index.html", authorized=user_authorized)
 
@@ -117,8 +117,6 @@ def handle_callback():
 
     :return:
     """
-    global TOKENS
-
     try:
         TOKENS["user_token"] = get_user_token(flask.request.args.get("code"))
 
@@ -133,8 +131,6 @@ def callback_url():
 
 @app.route("/posts")
 def posts():
-    global TOKENS
-
     # Make sure there is a token
     try:
         token = TOKENS["user_token"]
