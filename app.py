@@ -93,12 +93,7 @@ def serve_home():
 @app.route("/authorize")
 def authorize_facebook():
     """
-    Redirects the user to the Facebook login page to authorize the app:
-    - response_type=code
-    - Scope requests is to post updates on behalf of
-      the user and read their stream
-
-    :return: Redirects to the Facebook login page
+    Redirect the user to the Facebook login page to authorize the app
     """
     qs = urllib.parse.urlencode(dict(
         client_id=FACEBOOK_APP_ID,
