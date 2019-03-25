@@ -3,7 +3,19 @@
 
 {% block scripts %}
 {{super()}}
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId: '{{FACEBOOK_APP_ID}}',
+      autoLogAppEvents: true,
+      xfbml: true,
+      version: 'v3.2'
+    });
+  };
+</script>
+
 <script src="{{url_for('static', filename='index.js')}}"></script>
+<script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
 {% endblock %}
 
 {% block styles %}

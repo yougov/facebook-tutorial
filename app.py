@@ -87,7 +87,11 @@ def serve_home():
     # if authorized login button will not be displayed
     user_authorized = "user_token" in TOKENS
 
-    return flask.render_template("index.html", authorized=user_authorized)
+    return flask.render_template(
+        "index.html",
+        authorized=user_authorized,
+        FACEBOOK_APP_ID=FACEBOOK_APP_ID,
+    )
 
 
 @app.route("/authorize")
