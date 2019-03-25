@@ -15,10 +15,12 @@ Bootstrap(app)
 
 FACEBOOK_APP_ID = os.environ['FACEBOOK_APP_ID']
 FACEBOOK_APP_SECRET = os.environ['FACEBOOK_APP_SECRET']
+FACEBOOK_GRAPH_VERSION = 'v3.2'
 
 TOKENS = {}
 
-facebook = sessions.BaseUrlSession('https://graph.facebook.com/v2.4/')
+facebook = sessions.BaseUrlSession(
+    f'https://graph.facebook.com/{FACEBOOK_GRAPH_VERSION}/')
 
 logging.basicConfig(
     level=logging.INFO,
@@ -91,6 +93,7 @@ def serve_home():
         "index.html",
         authorized=user_authorized,
         FACEBOOK_APP_ID=FACEBOOK_APP_ID,
+        FACEBOOK_GRAPH_VERSION=FACEBOOK_GRAPH_VERSION,
     )
 
 
