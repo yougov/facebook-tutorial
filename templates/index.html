@@ -24,10 +24,6 @@
 
 {% block content %}
 
-{% if not authorized %}
-<div id="login">
-    <button class="btn btn-default btn-lg" onclick="location.href='/authorize'">Authorize</button>
-</div>
-{% endif %}
+<div id="content"></div>
 
 {% endblock %}
